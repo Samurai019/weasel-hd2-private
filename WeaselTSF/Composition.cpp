@@ -216,7 +216,7 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
   com_ptr<ITfInsertAtSelection> pInsertAtSelection;
   com_ptr<ITfRange> pRangeComposition;
   ITfRange* pRange;
-  RECT rc;
+  RECT rc = {};
   BOOL fClipped;
   TF_SELECTION selection;
   ULONG nSelection;
@@ -236,30 +236,52 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
     pRange = selection.range;
   }
 
-  if ((_pContextView->GetTextExt(ec, pRange, &rc, &fClipped)) == S_OK &&
-      (rc.left != 0 || rc.top != 0)) {
-    // get the foreground window pos and check if rc from GetTextExt is out of
-    // window
-    if (_enhancedPosition) {
-      HWND hwnd;
-      RECT rcForegroundWindow;
-      hwnd = GetForegroundWindow();
-      ::GetWindowRect(hwnd, &rcForegroundWindow);
+  const HRESULT textExtResult =
+      _pContextView->GetTextExt(ec, pRange, &rc, &fClipped);
 
-      if (rc.left < rcForegroundWindow.left ||
-          rc.left > rcForegroundWindow.right ||
-          rc.top < rcForegroundWindow.top ||
-          rc.top > rcForegroundWindow.bottom) {
-        POINT pt;
-        bool hasCaret = ::GetCaretPos(&pt);
-        int offsetx = rcForegroundWindow.left - rc.left + (hasCaret ? pt.x : 0);
-        int offsety = rcForegroundWindow.top - rc.top + (hasCaret ? pt.y : 0);
-        rc.left += offsetx;
-        rc.right += offsetx;
-        rc.top += offsety;
-        rc.bottom += offsety;
-      }
+  RECT rcView = {};
+  bool hasViewRect =
+      SUCCEEDED(_pContextView->GetScreenExt(&rcView)) &&
+      rcView.right > rcView.left && rcView.bottom > rcView.top;
+  if (!hasViewRect) {
+    HWND hwnd = NULL;
+    if (SUCCEEDED(_pContextView->GetWnd(&hwnd)) && hwnd != NULL) {
+      hasViewRect = !!::GetWindowRect(hwnd, &rcView);
     }
+  }
+  if (!hasViewRect) {
+    HWND hwnd = ::GetForegroundWindow();
+    hasViewRect = hwnd != NULL && !!::GetWindowRect(hwnd, &rcView);
+  }
+
+  const bool invalidRect = FAILED(textExtResult) || rc.right < rc.left ||
+                           rc.bottom < rc.top ||
+                           (rc.left == 0 && rc.top == 0 && rc.right == 0 &&
+                            rc.bottom == 0);
+  const bool nearViewOrigin =
+      hasViewRect && abs(rc.left - rcView.left) <= 2 &&
+      abs(rc.top - rcView.top) <= 2;
+
+  if ((invalidRect || nearViewOrigin) && hasViewRect) {
+    // HD2 exposes a TSF text store but reports an empty or top-left text
+    // extent for its custom chat control. Anchor the standalone candidate UI
+    // near the lower-right chat area using relative coordinates so the
+    // fallback works across resolutions and window modes.
+    const LONG width = rcView.right - rcView.left;
+    const LONG height = rcView.bottom - rcView.top;
+    rc.left = rc.right = rcView.left + width * 3 / 4;
+    rc.top = rc.bottom = rcView.top + height * 4 / 5;
+  } else if (SUCCEEDED(textExtResult) && _enhancedPosition && hasViewRect &&
+             (rc.left < rcView.left || rc.left > rcView.right ||
+              rc.top < rcView.top || rc.top > rcView.bottom)) {
+    POINT pt = {};
+    const bool hasCaret = !!::GetCaretPos(&pt);
+    const int offsetx = rcView.left - rc.left + (hasCaret ? pt.x : 0);
+    const int offsety = rcView.top - rc.top + (hasCaret ? pt.y : 0);
+    ::OffsetRect(&rc, offsetx, offsety);
+  }
+
+  if (!invalidRect || hasViewRect) {
     _pTextService->_SetCompositionPosition(rc);
   }
   return S_OK;
