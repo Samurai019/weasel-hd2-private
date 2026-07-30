@@ -9,9 +9,9 @@ rem Rime configuration manager and downloaded packages
 set plum_dir=%APPDATA%\plum
 
 rem Location of Rime user directory
-rem set rime_dir=%APPDATA%\Rime
+rem set rime_dir=%APPDATA%\RimeHD2
 
-set key=HKEY_CURRENT_USER\SOFTWARE\Rime\Weasel
+set key=HKEY_CURRENT_USER\SOFTWARE\Rime\WeaselHD2
 set name=RimeUserDir
 for /f "tokens=2*" %%a in ('reg query "%key%" /v "%name%"') do set rime_dir=%%b
 

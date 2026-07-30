@@ -171,7 +171,7 @@ ExitError:
 
 STDMETHODIMP WeaselTSF::OnSetThreadFocus() {
   std::wstring _ToggleImeOnOpenClose{};
-  RegGetStringValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
+  RegGetStringValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY,
                     L"ToggleImeOnOpenClose", _ToggleImeOnOpenClose);
   _isToOpenClose = (_ToggleImeOnOpenClose == L"yes");
   if (m_client.Echo()) {

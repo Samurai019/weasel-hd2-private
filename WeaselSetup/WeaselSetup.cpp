@@ -202,11 +202,11 @@ static int Run(LPTSTR lpCmdLine) {
   }
 
   if (!wcscmp(L"/eu", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel\\Updates",
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_UPDATE_REG_KEY,
                           L"CheckForUpdates", L"1", REG_SZ);
   }
   if (!wcscmp(L"/du", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel\\Updates",
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_UPDATE_REG_KEY,
                           L"CheckForUpdates", L"0", REG_SZ);
   }
 
