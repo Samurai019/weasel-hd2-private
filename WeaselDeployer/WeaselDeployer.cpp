@@ -1,6 +1,7 @@
 // WeaselDeployer.cpp : Defines the entry point for the application.
 //
 #include "stdafx.h"
+#include <WeaselConstants.h>
 #include <WeaselUtility.h>
 #include <fstream>
 #include "WeaselDeployer.h"
@@ -40,7 +41,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   CreateDirectory(WeaselUserDataPath().c_str(), NULL);
 
   int ret = 0;
-  HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerExclusiveMutex");
+  HANDLE hMutex = CreateMutex(NULL, TRUE, WEASEL_DEPLOYER_EXCLUSIVE_MUTEX);
   if (!hMutex) {
     ret = 1;
   } else if (GetLastError() == ERROR_ALREADY_EXISTS) {

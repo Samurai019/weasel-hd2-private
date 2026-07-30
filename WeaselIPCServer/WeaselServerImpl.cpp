@@ -3,6 +3,7 @@
 #include <mutex>
 #include <Windows.h>
 #include <resource.h>
+#include <WeaselConstants.h>
 #include <WeaselUtility.h>
 
 namespace weasel {
@@ -140,7 +141,7 @@ DWORD ServerImpl::OnCommand(WEASEL_IPC_COMMAND uMsg,
 }
 
 HWND ServerImpl::Start() {
-  std::wstring instanceName = L"(WEASEL)Furandōru-Sukāretto-";
+  std::wstring instanceName = WEASEL_SERVER_MUTEX;
   instanceName += getUsername();
   HANDLE hMutexOneInstance = ::CreateMutex(NULL, FALSE, instanceName.c_str());
   bool areYouOK = (::GetLastError() == ERROR_ALREADY_EXISTS ||

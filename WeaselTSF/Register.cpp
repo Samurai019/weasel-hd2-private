@@ -219,10 +219,10 @@ BOOL RegisterServer() {
         // ARM64 processes, and weaselx64.dll on x64 processes.
         //
         // But GetModuleFileNameA will return the actual loaded DLL name aka
-        // weaselARM64.dll Rewrite the path to point to the redirector.
+        // weaselhd2ARM64.dll Rewrite the path to point to the redirector.
 
         char wrapperPath[MAX_PATH];
-        StringCbCatA(achFileName, MAX_PATH, "\\..\\weasel.dll");
+        StringCbCatA(achFileName, MAX_PATH, "\\..\\weaselhd2.dll");
         GetFullPathNameA(achFileName, MAX_PATH, wrapperPath, NULL);
         memcpy(achFileName, wrapperPath, MAX_PATH);
       }

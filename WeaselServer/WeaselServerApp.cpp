@@ -17,7 +17,7 @@ int WeaselServerApp::Run() {
     return -1;
 
   // win_sparkle_set_appcast_url("http://localhost:8000/weasel/update/appcast.xml");
-  win_sparkle_set_registry_path("Software\\Rime\\Weasel\\Updates");
+  win_sparkle_set_registry_path("Software\\Rime\\WeaselHD2\\Updates");
   if (GetThreadUILanguage() ==
       MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL))
     win_sparkle_set_lang("zh-TW");
@@ -26,7 +26,7 @@ int WeaselServerApp::Run() {
     win_sparkle_set_lang("zh-CN");
   else
     win_sparkle_set_lang("en");
-  win_sparkle_init();
+  // This private HD2 build has no dedicated signed update channel.
   m_ui.Create(m_server.GetHWnd());
 
   m_handler->Initialize();
@@ -40,7 +40,7 @@ int WeaselServerApp::Run() {
   m_handler->Finalize();
   m_ui.Destroy();
   tray_icon.RemoveIcon();
-  win_sparkle_cleanup();
+  // WinSparkle was intentionally not initialized for this private build.
 
   return ret;
 }

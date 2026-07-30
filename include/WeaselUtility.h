@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <filesystem>
 #include <string>
+#include <WeaselConstants.h>
 #include <sstream>
 #include <wrl/client.h>
 using namespace Microsoft::WRL;
@@ -37,7 +38,7 @@ std::filesystem::path WeaselUserDataPath();
 inline fs::path WeaselLogPath() {
   WCHAR _path[MAX_PATH] = {0};
   // default location
-  ExpandEnvironmentStringsW(L"%TEMP%\\rime.weasel", _path, _countof(_path));
+  ExpandEnvironmentStringsW(L"%TEMP%\\rime.weasel.hd2", _path, _countof(_path));
   fs::path path = fs::path(_path);
   if (!fs::exists(path)) {
     fs::create_directories(path);
@@ -194,9 +195,9 @@ inline std::wstring get_weasel_ime_name() {
       langId == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG) ||
       langId == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE) ||
       langId == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_MACAU)) {
-    return L"小狼毫";
+    return L"小狼毫 HD2 Unicode";
   } else {
-    return L"Weasel";
+    return L"Weasel HD2 Unicode";
   }
 }
 
@@ -217,8 +218,8 @@ inline LONG RegGetStringValue(HKEY key,
 
 inline LANGID get_language_id() {
   std::wstring lang{};
-  if (RegGetStringValue(HKEY_CURRENT_USER, L"Software\\Rime\\Weasel",
-                        L"Language", lang) == ERROR_SUCCESS) {
+  if (RegGetStringValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY, L"Language",
+                        lang) == ERROR_SUCCESS) {
     if (lang == L"chs")
       return MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
     else if (lang == L"cht")

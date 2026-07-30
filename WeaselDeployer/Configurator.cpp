@@ -42,7 +42,7 @@ void Configurator::Initialize() {
   weasel_traits.distribution_name = distribution_name.c_str();
   weasel_traits.distribution_code_name = WEASEL_CODE_NAME;
   weasel_traits.distribution_version = WEASEL_VERSION;
-  weasel_traits.app_name = "rime.weasel";
+  weasel_traits.app_name = "rime.weasel.hd2";
   std::string log_dir = WeaselLogPath().u8string();
   weasel_traits.log_dir = log_dir.c_str();
   RimeApi* rime_api = rime_get_api();
@@ -114,7 +114,7 @@ int Configurator::Run(bool installing) {
 }
 
 int Configurator::UpdateWorkspace(bool report_errors) {
-  HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerMutex");
+  HANDLE hMutex = CreateMutex(NULL, TRUE, WEASEL_DEPLOYER_MUTEX);
   if (!hMutex) {
     LOG(ERROR) << "Error creating WeaselDeployerMutex.";
     return 1;
@@ -156,7 +156,7 @@ int Configurator::UpdateWorkspace(bool report_errors) {
 }
 
 int Configurator::DictManagement() {
-  HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerMutex");
+  HANDLE hMutex = CreateMutex(NULL, TRUE, WEASEL_DEPLOYER_MUTEX);
   if (!hMutex) {
     LOG(ERROR) << "Error creating WeaselDeployerMutex.";
     return 1;
@@ -196,7 +196,7 @@ int Configurator::DictManagement() {
 }
 
 int Configurator::SyncUserData() {
-  HANDLE hMutex = CreateMutex(NULL, TRUE, L"WeaselDeployerMutex");
+  HANDLE hMutex = CreateMutex(NULL, TRUE, WEASEL_DEPLOYER_MUTEX);
   if (!hMutex) {
     LOG(ERROR) << "Error creating WeaselDeployerMutex.";
     return 1;

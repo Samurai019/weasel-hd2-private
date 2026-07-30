@@ -59,7 +59,7 @@ static int CustomInstall(bool installing) {
   bool silent = false;
   std::wstring user_dir;
 
-  const WCHAR KEY[] = L"Software\\Rime\\Weasel";
+  const WCHAR KEY[] = WEASEL_USER_REG_KEY;
   HKEY hKey;
   LSTATUS ret = RegOpenKey(HKEY_CURRENT_USER, KEY, &hKey);
   if (ret == ERROR_SUCCESS) {
@@ -101,9 +101,9 @@ static int CustomInstall(bool installing) {
       return 1;
 
   if (user_dir.empty()) {
-    // default user dir %APPDATA%\Rime
+    // default user dir %APPDATA%\RimeHD2
     WCHAR _path[MAX_PATH] = {0};
-    ExpandEnvironmentStringsW(L"%APPDATA%\\Rime", _path, _countof(_path));
+    ExpandEnvironmentStringsW(L"%APPDATA%\\RimeHD2", _path, _countof(_path));
     user_dir = std::wstring(_path);
   }
   ret = SetRegKeyValue(HKEY_CURRENT_USER, KEY, L"RimeUserDir", user_dir.c_str(),
@@ -186,19 +186,19 @@ static int Run(LPTSTR lpCmdLine) {
   }
 
   if (auto res = GetParamByPrefix(lpCmdLine, L"/userdir:")) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY,
                           L"RimeUserDir", res, REG_SZ);
   }
 
   if (!wcscmp(L"/ls", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
-                          L"Language", L"chs", REG_SZ);
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY, L"Language",
+                          L"chs", REG_SZ);
   } else if (!wcscmp(L"/lt", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
-                          L"Language", L"cht", REG_SZ);
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY, L"Language",
+                          L"cht", REG_SZ);
   } else if (!wcscmp(L"/le", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
-                          L"Language", L"eng", REG_SZ);
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY, L"Language",
+                          L"eng", REG_SZ);
   }
 
   if (!wcscmp(L"/eu", lpCmdLine)) {
@@ -211,19 +211,19 @@ static int Run(LPTSTR lpCmdLine) {
   }
 
   if (!wcscmp(L"/toggleime", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY,
                           L"ToggleImeOnOpenClose", L"yes", REG_SZ);
   }
   if (!wcscmp(L"/toggleascii", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY,
                           L"ToggleImeOnOpenClose", L"no", REG_SZ);
   }
   if (!wcscmp(L"/testing", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY,
                           L"UpdateChannel", L"testing", REG_SZ);
   }
   if (!wcscmp(L"/release", lpCmdLine)) {
-    return SetRegKeyValue(HKEY_CURRENT_USER, L"Software\\Rime\\weasel",
+    return SetRegKeyValue(HKEY_CURRENT_USER, WEASEL_USER_REG_KEY,
                           L"UpdateChannel", L"release", REG_SZ);
   }
 

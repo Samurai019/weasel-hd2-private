@@ -8,34 +8,30 @@
 #include <WeaselUtility.h>
 #include "InstallOptionsDlg.h"
 
-// {A3F4CDED-B1E9-41EE-9CA6-7B4D0DE6CB0A}
+// {40D0E539-EF5E-45A2-93FF-55FA9A4EC5AE}
 static const GUID c_clsidTextService = {
-    0xa3f4cded,
-    0xb1e9,
-    0x41ee,
-    {0x9c, 0xa6, 0x7b, 0x4d, 0xd, 0xe6, 0xcb, 0xa}};
+    0x40d0e539,
+    0xef5e,
+    0x45a2,
+    {0x93, 0xff, 0x55, 0xfa, 0x9a, 0x4e, 0xc5, 0xae}};
 
-// {3D02CAB6-2B8E-4781-BA20-1C9267529467}
+// {3BF30DF8-FF9D-4F69-BD72-1B6B29FAA58E}
 static const GUID c_guidProfile = {
-    0x3d02cab6,
-    0x2b8e,
-    0x4781,
-    {0xba, 0x20, 0x1c, 0x92, 0x67, 0x52, 0x94, 0x67}};
+    0x3bf30df8,
+    0xff9d,
+    0x4f69,
+    {0xbd, 0x72, 0x1b, 0x6b, 0x29, 0xfa, 0xa5, 0x8e}};
 
 // if in the future, option hant is extended, maybe a function to generate this
 // info is required
 #define PSZTITLE_HANS                                                     \
-  L"0804:{A3F4CDED-B1E9-41EE-9CA6-7B4D0DE6CB0A}{3D02CAB6-2B8E-4781-BA20-" \
-  L"1C9267529467}"
+  L"0804:{40D0E539-EF5E-45A2-93FF-55FA9A4EC5AE}{3BF30DF8-FF9D-4F69-BD72-" \
+  L"1B6B29FAA58E}"
 #define PSZTITLE_HANT                                                     \
-  L"0404:{A3F4CDED-B1E9-41EE-9CA6-7B4D0DE6CB0A}{3D02CAB6-2B8E-4781-BA20-" \
-  L"1C9267529467}"
+  L"0404:{40D0E539-EF5E-45A2-93FF-55FA9A4EC5AE}{3BF30DF8-FF9D-4F69-BD72-" \
+  L"1B6B29FAA58E}"
 #define ILOT_UNINSTALL 0x00000001
 typedef HRESULT(WINAPI* PTF_INSTALLLAYOUTORTIP)(LPCWSTR psz, DWORD dwFlags);
-
-#define WEASEL_WER_KEY                            \
-  L"SOFTWARE\\Microsoft\\Windows\\Windows Error " \
-  L"Reporting\\LocalDumps\\WeaselServer.exe"
 
 BOOL copy_file(const std::wstring& src, const std::wstring& dest) {
   BOOL ret = CopyFile(src.c_str(), dest.c_str(), FALSE);
@@ -136,7 +132,8 @@ int install_ime_file(std::wstring& srcPath,
   srcPath = std::wstring(drive) + dir + srcFileName;
 
   GetSystemDirectoryW(path, _countof(path));
-  std::wstring destPath = std::wstring(path) + L"\\weasel" + ext;
+  std::wstring destPath =
+      std::wstring(path) + L"\\" + std::wstring(WEASEL_TSF_BASENAME) + ext;
 
   int retval = 0;
   // 复制 .dll/.ime 到系统目录
@@ -168,7 +165,8 @@ int install_ime_file(std::wstring& srcPath,
         std::wstring srcPathARM32 = srcPath;
         ireplace_last(srcPathARM32, ext, L"ARM" + ext);
 
-        std::wstring destPathARM32 = std::wstring(sysarm32) + L"\\weasel" + ext;
+        std::wstring destPathARM32 =
+            std::wstring(sysarm32) + L"\\" + WEASEL_TSF_BASENAME + ext;
         if (!copy_file(srcPathARM32, destPathARM32)) {
           MSG_NOT_SILENT_ID_CAP(silent, destPathARM32.c_str(),
                                 IDS_STR_INSTALL_FAILED, MB_ICONERROR | MB_OK);
@@ -232,7 +230,7 @@ int uninstall_ime_file(const std::wstring& ext,
   WCHAR path[MAX_PATH];
   GetSystemDirectoryW(path, _countof(path));
   std::wstring imePath(path);
-  imePath += L"\\weasel" + ext;
+  imePath += L"\\" + std::wstring(WEASEL_TSF_BASENAME) + ext;
   retval += func(imePath, false, false, false, false, silent);
   delete_file(imePath);
   if (is_wow64()) {
@@ -247,7 +245,8 @@ int uninstall_ime_file(const std::wstring& ext,
     if (is_arm64_machine()) {
       WCHAR sysarm32[MAX_PATH];
       if (get_wow_arm32_system_dir(sysarm32, _countof(sysarm32)) > 0) {
-        std::wstring imePathARM32 = std::wstring(sysarm32) + L"\\weasel" + ext;
+        std::wstring imePathARM32 =
+            std::wstring(sysarm32) + L"\\" + WEASEL_TSF_BASENAME + ext;
         retval += func(imePathARM32, false, true, true, false, silent);
         delete_file(imePathARM32);
       }
@@ -315,7 +314,9 @@ int register_text_service(const std::wstring& tsf_path,
     params = L" /u " + params;  // unregister
   }
   // if (silent)  // always silent
-  { params = L" /s " + params; }
+  {
+    params = L" /s " + params;
+  }
 
   if (!SetEnvironmentVariable(L"TEXTSERVICE_PROFILE",
                               hant ? L"hant" : L"hans")) {
@@ -408,21 +409,6 @@ int install(bool hant, bool silent) {
     FreeLibrary(hInputDLL);
   }
 
-  // https://learn.microsoft.com/zh-cn/windows/win32/wer/collecting-user-mode-dumps
-  const std::wstring dmpPathW = WeaselLogPath().wstring();
-  // DumpFolder
-  SetRegKeyValue(HKEY_LOCAL_MACHINE, WEASEL_WER_KEY, L"DumpFolder",
-                 dmpPathW.c_str(), REG_SZ, true);
-  // dump type 0
-  SetRegKeyValue(HKEY_LOCAL_MACHINE, WEASEL_WER_KEY, L"DumpType", 0, REG_DWORD,
-                 true);
-  // CustomDumpFlags, MiniDumpNormal
-  SetRegKeyValue(HKEY_LOCAL_MACHINE, WEASEL_WER_KEY, L"CustomDumpFlags", 0,
-                 REG_DWORD, true);
-  // maximium dump count 10
-  SetRegKeyValue(HKEY_LOCAL_MACHINE, WEASEL_WER_KEY, L"DumpCount", 10,
-                 REG_DWORD, true);
-
   if (retval)
     return 1;
 
@@ -436,7 +422,7 @@ int uninstall(bool silent) {
   // 注销输入法
   int retval = 0;
 
-  const WCHAR KEY[] = L"Software\\Rime\\Weasel";
+  const WCHAR KEY[] = WEASEL_USER_REG_KEY;
   HKEY hKey;
   LSTATUS ret = RegOpenKey(HKEY_CURRENT_USER, KEY, &hKey);
   if (ret == ERROR_SUCCESS) {
@@ -467,14 +453,7 @@ int uninstall(bool silent) {
 
   // 清除注册信息
   RegDeleteKey(HKEY_LOCAL_MACHINE, WEASEL_REG_KEY);
-  RegDeleteKey(HKEY_LOCAL_MACHINE, RIME_REG_KEY);
 
-  // delete WER register,
-  // "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\Windows Error
-  // Reporting\\LocalDumps\\WeaselServer.exe" no WOW64 redirect
-
-  auto flag_wow64 = is_wow64() ? KEY_WOW64_64KEY : 0;
-  RegDeleteKeyEx(HKEY_LOCAL_MACHINE, WEASEL_WER_KEY, flag_wow64, 0);
   if (retval)
     return 1;
 
@@ -488,7 +467,8 @@ bool has_installed() {
   WCHAR path[MAX_PATH];
   GetSystemDirectory(path, _countof(path));
   std::wstring sysPath(path);
-  DWORD attr = GetFileAttributesW((sysPath + L"\\weasel.dll").c_str());
+  DWORD attr = GetFileAttributesW(
+      (sysPath + L"\\" + std::wstring(WEASEL_TSF_BASENAME) + L".dll").c_str());
   return (attr != INVALID_FILE_ATTRIBUTES &&
           !(attr & FILE_ATTRIBUTE_DIRECTORY));
 }
