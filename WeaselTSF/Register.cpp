@@ -10,37 +10,6 @@ static const char c_szTipKeyPrefix[] = "Software\\Microsft\\CTF\\TIP\\";
 static const char c_szInProcSvr32[] = "InprocServer32";
 static const char c_szModelName[] = "ThreadingModel";
 
-HKL FindIME(LANGID langid) {
-  HKL hKL = NULL;
-  WCHAR key[9];
-  HKEY hKey;
-  LSTATUS ret =
-      RegOpenKeyExW(HKEY_LOCAL_MACHINE,
-                    L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts", 0,
-                    KEY_READ, &hKey);
-  if (ret == ERROR_SUCCESS) {
-    for (DWORD id = (0xE0200000 | langid);
-         hKL == NULL && id <= (0xE0FF0000 | langid); id += 0x10000) {
-      StringCchPrintfW(key, _countof(key), L"%08X", id);
-      HKEY hSubKey;
-      ret = RegOpenKeyExW(hKey, key, 0, KEY_READ, &hSubKey);
-      if (ret == ERROR_SUCCESS) {
-        WCHAR data[32];
-        DWORD type;
-        DWORD size = sizeof data;
-        ret = RegQueryValueExW(hSubKey, L"Ime File", NULL, &type, (LPBYTE)data,
-                               &size);
-        if (ret == ERROR_SUCCESS && type == REG_SZ &&
-            _wcsicmp(data, L"weasel.ime") == 0)
-          hKL = (HKL)id;
-      }
-      RegCloseKey(hSubKey);
-    }
-  }
-  RegCloseKey(hKey);
-  return hKL;
-}
-
 BOOL RegisterProfiles() {
 #define CHECK_HR(hr) \
   if (FAILED(hr))    \
@@ -76,10 +45,10 @@ BOOL RegisterProfiles() {
         hkl, 0, enable, 0);
   };
 
-  const auto hkl_hans = FindIME(TEXTSERVICE_LANGID_HANS);
-  const auto hkl_hant = FindIME(TEXTSERVICE_LANGID_HANT);
-  CHECK_HR(register_profile(TEXTSERVICE_LANGID_HANS, hkl_hans, hansEnable));
-  CHECK_HR(register_profile(TEXTSERVICE_LANGID_HANT, hkl_hant, hantEnable));
+  // This standalone build is TSF-only. Do not bind its profiles to the
+  // official Weasel legacy IMM keyboard layouts when both products coexist.
+  CHECK_HR(register_profile(TEXTSERVICE_LANGID_HANS, NULL, hansEnable));
+  CHECK_HR(register_profile(TEXTSERVICE_LANGID_HANT, NULL, hantEnable));
   // WeaselIME not support these languages, so HKL is NULL
   CHECK_HR(register_profile(TEXTSERVICE_LANGID_HONGKONG, NULL, false));
   CHECK_HR(register_profile(TEXTSERVICE_LANGID_MACAU, NULL, false));
