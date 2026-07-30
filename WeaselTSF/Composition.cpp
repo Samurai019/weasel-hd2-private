@@ -240,9 +240,9 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
       _pContextView->GetTextExt(ec, pRange, &rc, &fClipped);
 
   RECT rcView = {};
-  bool hasViewRect =
-      SUCCEEDED(_pContextView->GetScreenExt(&rcView)) &&
-      rcView.right > rcView.left && rcView.bottom > rcView.top;
+  bool hasViewRect = SUCCEEDED(_pContextView->GetScreenExt(&rcView)) &&
+                     rcView.right > rcView.left &&
+                     rcView.bottom > rcView.top;
   if (!hasViewRect) {
     HWND hwnd = NULL;
     if (SUCCEEDED(_pContextView->GetWnd(&hwnd)) && hwnd != NULL) {
@@ -254,13 +254,12 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
     hasViewRect = hwnd != NULL && !!::GetWindowRect(hwnd, &rcView);
   }
 
-  const bool invalidRect = FAILED(textExtResult) || rc.right < rc.left ||
-                           rc.bottom < rc.top ||
-                           (rc.left == 0 && rc.top == 0 && rc.right == 0 &&
-                            rc.bottom == 0);
-  const bool nearViewOrigin =
-      hasViewRect && abs(rc.left - rcView.left) <= 2 &&
-      abs(rc.top - rcView.top) <= 2;
+  const bool invalidRect =
+      FAILED(textExtResult) || rc.right < rc.left || rc.bottom < rc.top ||
+      (rc.left == 0 && rc.top == 0 && rc.right == 0 && rc.bottom == 0);
+  const bool nearViewOrigin = hasViewRect &&
+                              abs(rc.left - rcView.left) <= 2 &&
+                              abs(rc.top - rcView.top) <= 2;
 
   if ((invalidRect || nearViewOrigin) && hasViewRect) {
     // HD2 exposes a TSF text store but reports an empty or top-left text
