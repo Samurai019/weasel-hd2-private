@@ -270,7 +270,7 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
     const LONG height = rcView.bottom - rcView.top;
     rc.left = rc.right = rcView.left + width * 3 / 4;
     rc.top = rcView.top + height * 4 / 5;
-    rc.bottom = rc.top + 1;
+    rc.bottom = rc.top + 2;
   } else if (SUCCEEDED(textExtResult) && _enhancedPosition && hasViewRect &&
              (rc.left < rcView.left || rc.left > rcView.right ||
               rc.top < rcView.top || rc.top > rcView.bottom)) {
