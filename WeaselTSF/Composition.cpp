@@ -240,9 +240,10 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
       _pContextView->GetTextExt(ec, pRange, &rc, &fClipped);
 
   RECT rcView = {};
-  bool hasViewRect = SUCCEEDED(_pContextView->GetScreenExt(&rcView)) &&
-                     rcView.right > rcView.left &&
-                     rcView.bottom > rcView.top;
+  const bool hasScreenExt = SUCCEEDED(_pContextView->GetScreenExt(&rcView));
+  const bool hasViewWidth = rcView.right > rcView.left;
+  const bool hasViewHeight = rcView.bottom > rcView.top;
+  bool hasViewRect = hasScreenExt && hasViewWidth && hasViewHeight;
   if (!hasViewRect) {
     HWND hwnd = NULL;
     if (SUCCEEDED(_pContextView->GetWnd(&hwnd)) && hwnd != NULL) {
@@ -254,12 +255,11 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
     hasViewRect = hwnd != NULL && !!::GetWindowRect(hwnd, &rcView);
   }
 
-  const bool invalidRect =
-      FAILED(textExtResult) || rc.right < rc.left || rc.bottom < rc.top ||
-      (rc.left == 0 && rc.top == 0 && rc.right == 0 && rc.bottom == 0);
-  const bool nearViewOrigin = hasViewRect &&
-                              abs(rc.left - rcView.left) <= 2 &&
-                              abs(rc.top - rcView.top) <= 2;
+  const bool invertedRect = rc.right < rc.left || rc.bottom <= rc.top;
+  const bool invalidRect = FAILED(textExtResult) || invertedRect;
+  const bool nearViewLeft = abs(rc.left - rcView.left) <= 2;
+  const bool nearViewTop = abs(rc.top - rcView.top) <= 2;
+  const bool nearViewOrigin = hasViewRect && nearViewLeft && nearViewTop;
 
   if ((invalidRect || nearViewOrigin) && hasViewRect) {
     // HD2 exposes a TSF text store but reports an empty or top-left text
@@ -269,7 +269,8 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
     const LONG width = rcView.right - rcView.left;
     const LONG height = rcView.bottom - rcView.top;
     rc.left = rc.right = rcView.left + width * 3 / 4;
-    rc.top = rc.bottom = rcView.top + height * 4 / 5;
+    rc.top = rcView.top + height * 4 / 5;
+    rc.bottom = rc.top + 1;
   } else if (SUCCEEDED(textExtResult) && _enhancedPosition && hasViewRect &&
              (rc.left < rcView.left || rc.left > rcView.right ||
               rc.top < rcView.top || rc.top > rcView.bottom)) {
