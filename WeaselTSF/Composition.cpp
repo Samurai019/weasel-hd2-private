@@ -3,6 +3,7 @@
 #include "EditSession.h"
 #include "ResponseParser.h"
 #include "CandidateList.h"
+#include <vector>
 
 /* Start Composition */
 class CStartCompositionEditSession : public CEditSession {
@@ -133,6 +134,59 @@ void WeaselTSF::_EndComposition(com_ptr<ITfContext> pContext, BOOL clear) {
                                  TF_ES_ASYNCDONTCARE | TF_ES_READWRITE, &hr);
     pEditSession->Release();
   }
+}
+
+BOOL WeaselTSF::_EndCompositionSynchronously(TfEditCookie ec,
+                                             com_ptr<ITfContext> pContext,
+                                             BOOL clear) {
+  if (!_IsComposing())
+    return TRUE;
+  if (pContext == nullptr || _pComposition == nullptr)
+    return FALSE;
+
+  _cand->EndUI();
+  _ClearCompositionDisplayAttributes(ec, pContext);
+
+  com_ptr<ITfRange> pCompositionRange;
+  if (clear) {
+    if (FAILED(_pComposition->GetRange(&pCompositionRange)))
+      return FALSE;
+    if (FAILED(pCompositionRange->SetText(ec, 0, L"", 0)))
+      return FALSE;
+  }
+
+  if (FAILED(_pComposition->EndComposition(ec)))
+    return FALSE;
+
+  _FinalizeComposition();
+  return TRUE;
+}
+
+BOOL WeaselTSF::_SendUnicodeText(const std::wstring& text) {
+  if (text.empty())
+    return TRUE;
+
+  constexpr ULONG_PTR kUnicodeCommitMarker = static_cast<ULONG_PTR>(0x57484432);
+  std::vector<INPUT> inputs;
+  inputs.reserve(text.size() * 2);
+
+  for (const wchar_t unit : text) {
+    INPUT input{};
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = 0;
+    input.ki.wScan = static_cast<WORD>(unit);
+    input.ki.dwFlags = KEYEVENTF_UNICODE;
+    input.ki.dwExtraInfo = kUnicodeCommitMarker;
+    inputs.push_back(input);
+
+    input.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+    inputs.push_back(input);
+  }
+
+  SetLastError(ERROR_SUCCESS);
+  const UINT inserted = ::SendInput(static_cast<UINT>(inputs.size()),
+                                    inputs.data(), sizeof(INPUT));
+  return inserted == inputs.size();
 }
 
 /* Get Text Extent */

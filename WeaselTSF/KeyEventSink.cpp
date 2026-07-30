@@ -87,6 +87,10 @@ STDAPI WeaselTSF::OnTestKeyDown(ITfContext* pContext,
                                 WPARAM wParam,
                                 LPARAM lParam,
                                 BOOL* pfEaten) {
+  if (wParam == VK_PACKET) {
+    *pfEaten = FALSE;
+    return S_OK;
+  }
   _fTestKeyUpPending = FALSE;
   if (_fTestKeyDownPending) {
     *pfEaten = TRUE;
@@ -103,6 +107,10 @@ STDAPI WeaselTSF::OnKeyDown(ITfContext* pContext,
                             WPARAM wParam,
                             LPARAM lParam,
                             BOOL* pfEaten) {
+  if (wParam == VK_PACKET) {
+    *pfEaten = FALSE;
+    return S_OK;
+  }
   _fTestKeyUpPending = FALSE;
   if (_fTestKeyDownPending) {
     _fTestKeyDownPending = FALSE;
@@ -118,6 +126,10 @@ STDAPI WeaselTSF::OnTestKeyUp(ITfContext* pContext,
                               WPARAM wParam,
                               LPARAM lParam,
                               BOOL* pfEaten) {
+  if (wParam == VK_PACKET) {
+    *pfEaten = FALSE;
+    return S_OK;
+  }
   _fTestKeyDownPending = FALSE;
   if (_fTestKeyUpPending) {
     *pfEaten = TRUE;
@@ -134,6 +146,10 @@ STDAPI WeaselTSF::OnKeyUp(ITfContext* pContext,
                           WPARAM wParam,
                           LPARAM lParam,
                           BOOL* pfEaten) {
+  if (wParam == VK_PACKET) {
+    *pfEaten = FALSE;
+    return S_OK;
+  }
   _fTestKeyDownPending = FALSE;
   if (_fTestKeyUpPending) {
     _fTestKeyUpPending = FALSE;
