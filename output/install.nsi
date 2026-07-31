@@ -127,18 +127,18 @@ toquit:
   ; install x64 build for NativeARM64_WINDOWS11 and NativeAMD64_WINDOWS11
   ${If} ${AtLeastWin11} ; Windows 11 and above
     ${If} ${IsNativeARM64}
-      StrCpy $INSTDIR "$PROGRAMFILES64\Rime"
+      StrCpy $INSTDIR "$PROGRAMFILES64\Rime-hd2"
     ${ElseIf} ${IsNativeAMD64}
-      StrCpy $INSTDIR "$PROGRAMFILES64\Rime"
+      StrCpy $INSTDIR "$PROGRAMFILES64\Rime-hd2"
     ${Else}
-      StrCpy $INSTDIR "$PROGRAMFILES\Rime"
+      StrCpy $INSTDIR "$PROGRAMFILES\Rime-hd2"
     ${Endif}
   ; install x64 build for NativeAMD64_BELLOW_WINDOWS11
   ${Else} ; Windows 10 or bellow
     ${If} ${IsNativeAMD64}
-      StrCpy $INSTDIR "$PROGRAMFILES64\Rime"
+      StrCpy $INSTDIR "$PROGRAMFILES64\Rime-hd2"
     ${Else}
-      StrCpy $INSTDIR "$PROGRAMFILES\Rime"
+      StrCpy $INSTDIR "$PROGRAMFILES\Rime-hd2"
     ${Endif}
   ${Endif}
 skip:
