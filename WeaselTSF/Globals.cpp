@@ -51,12 +51,15 @@ const GUID GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT = {
 
 #endif
 
-// {886E4775-7ED1-48CF-B4C9-375609174C09}
+// {2C77A81E-41CC-4178-A3A7-5F8A987568E6}
+// This is the standard TSF input-mode language-bar item GUID. It is a
+// Windows language-bar contract, not a product identity, so it must remain
+// shared by the standalone and official Weasel profiles.
 const GUID GUID_LBI_INPUTMODE = {
-    0x886e4775,
-    0x7ed1,
-    0x48cf,
-    {0xb4, 0xc9, 0x37, 0x56, 0x09, 0x17, 0x4c, 0x09}};
+    0x2c77a81e,
+    0x41cc,
+    0x4178,
+    {0xa3, 0xa7, 0x5f, 0x8a, 0x98, 0x75, 0x68, 0xe6}};
 
 // {F44F4EED-EB02-4AA3-951F-F5B8B8060B9E}
 const GUID GUID_IME_MODE_PRESERVED_KEY = {
