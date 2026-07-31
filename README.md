@@ -1,13 +1,53 @@
-﻿【小狼毫】輸入法
-================
+﻿【小狼毫 HD2 Unicode】輸入法
+================================
 
 基於 中州韻輸入法引擎／Rime Input Method Engine 等開源技術
+基於上游 [rime/weasel](https://github.com/rime/weasel) 獨立改造
+
+這是一個專為《Helldivers 2》（絕地潛兵 2）聊天框中文輸入設計的小狼毫獨立共存版。原版小狼毫在該遊戲中可以顯示候選詞，但選詞後無法將中文提交到聊天框。本版本通過將輸入法的最終確認（commit）從標準 TSF `ITfRange::SetText()` 路徑改為 `SendInput(KEYEVENTF_UNICODE)`，繞過遊戲自定義聊天控件不兼容的 TSF composition 提交鏈，實現中文正常輸入。
+
+本版本可與官方小狼毫同時安裝、同時運行、獨立配置、獨立卸載。
+
+主要特性
+--------
+
+- **Unicode commit 提交**：輸入法確認文本以 `SendInput(KEYEVENTF_UNICODE)` 注入，兼容 HD2 聊天框
+- **獨立共存**：獨立的 TSF CLSID、Profile GUID、IPC 管道、註冊表鍵、安裝目錄、用戶數據目錄和日誌目錄
+- **候選窗定位修復**：在 HD2 自定義控件報告無效文本坐標時，自動回退到文檔視圖右下角區域
+- **語言欄完整**：保留標準 TSF 輸入模式語言欄圖標和右鍵菜單
+
+安裝與使用
+----------
+
+本品適用於 Windows 8.1 ~ Windows 11
+
+默認安裝目錄：`C:\Program Files\Rime-hd2\weasel-hd2-<版本號>`
+
+用戶數據目錄：`%AppData%\RimeHD2`
+
+日誌目錄：`%TEMP%\rime.weasel.hd2`
+
+安裝後在系統語言設置中選擇「小狼毫 HD2 Unicode」輸入法即可使用。建議搭配「朙月拼音·簡化字」方案，開箱即用。
+
+> ⚠️ 本版本不使用官方小狼毫的自動更新通道，如需升級請手動下載新版本覆蓋安裝。
+
+與官方小狼毫的隔離
+------------------
+
+| 隔離項 | 官方小狼毫 | 本版本 |
+|--------|-----------|--------|
+| TSF CLSID | 原版 | 獨立 |
+| 安裝目錄 | `C:\Program Files\Rime` | `C:\Program Files\Rime-hd2` |
+| 用戶數據 | `%AppData%\Rime` | `%AppData%\RimeHD2` |
+| 註冊表鍵 | `Software\Rime\Weasel` | `Software\Rime\WeaselHD2` |
+| IPC 管道 | `WeaselNamedPipe` | `WeaselHD2NamedPipe` |
+| 日誌目錄 | `%TEMP%\rime.weasel` | `%TEMP%\rime.weasel.hd2` |
+| 服務互斥體 | 原版 | 獨立 |
+
+原版小狼毫授權與致謝
+====================
 
 式恕堂 版權所無
-
-[![Download](https://img.shields.io/github/v/release/rime/weasel)](https://github.com/rime/weasel/releases/latest)
-[![Build status](https://github.com/rime/weasel/actions/workflows/commit-ci.yml/badge.svg)](https://github.com/rime/weasel/actions/workflows/commit-ci.yml)
-[![GitHub Tag](https://img.shields.io/github/tag/rime/weasel.svg)](https://github.com/rime/weasel)
 
 授權條款：GPLv3
 
