@@ -73,4 +73,12 @@ void WeaselServerApp::SetupMenuHandlers() {
                           std::bind(explore, WeaselUserDataPath()));
   m_server.AddMenuHandler(ID_WEASELTRAY_LOGDIR,
                           std::bind(explore, WeaselLogPath()));
+  m_server.AddMenuHandler(ID_WEASELTRAY_HD2_UNICODE_COMMIT, [] {
+    SetHd2UnicodeCommitEnabled(!Hd2UnicodeCommitEnabled());
+    return TRUE;
+  });
+  m_server.AddMenuHandler(ID_WEASELTRAY_HD2_CANDIDATE_FIX, [] {
+    SetHd2CandidateFixEnabled(!Hd2CandidateFixEnabled());
+    return TRUE;
+  });
 }

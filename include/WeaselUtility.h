@@ -201,6 +201,46 @@ inline std::wstring get_weasel_ime_name() {
   }
 }
 
+// HD2 behavior switches, stored under HKCU WEASEL_REG_KEY. Read on every
+// use by the in-process TSF DLL so toggling takes effect immediately.
+inline bool Hd2SwitchEnabled(const wchar_t* value_name, bool default_enabled) {
+  DWORD data = default_enabled ? 1 : 0;
+  DWORD type = 0;
+  DWORD size = sizeof(data);
+  LSTATUS st = RegGetValue(HKEY_CURRENT_USER, WEASEL_REG_KEY, value_name,
+                           RRF_RT_REG_DWORD, &type, &data, &size);
+  return st == ERROR_SUCCESS ? (data != 0) : default_enabled;
+}
+
+inline bool Hd2SetSwitch(const wchar_t* value_name, bool enabled) {
+  HKEY hKey = NULL;
+  if (RegCreateKeyExW(HKEY_CURRENT_USER, WEASEL_REG_KEY, 0, NULL, 0,
+                      KEY_SET_VALUE, NULL, &hKey, NULL) != ERROR_SUCCESS)
+    return false;
+  DWORD data = enabled ? 1 : 0;
+  LSTATUS st =
+      RegSetValueExW(hKey, value_name, 0, REG_DWORD,
+                     reinterpret_cast<const BYTE*>(&data), sizeof(data));
+  RegCloseKey(hKey);
+  return st == ERROR_SUCCESS;
+}
+
+inline bool Hd2UnicodeCommitEnabled() {
+  return Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_UNICODE_COMMIT, true);
+}
+
+inline bool Hd2CandidateFixEnabled() {
+  return Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_CANDIDATE_FIX, true);
+}
+
+inline void SetHd2UnicodeCommitEnabled(bool enabled) {
+  Hd2SetSwitch(WEASEL_HD2_REG_VALUE_UNICODE_COMMIT, enabled);
+}
+
+inline void SetHd2CandidateFixEnabled(bool enabled) {
+  Hd2SetSwitch(WEASEL_HD2_REG_VALUE_CANDIDATE_FIX, enabled);
+}
+
 inline LONG RegGetStringValue(HKEY key,
                               LPCWSTR lpSubKey,
                               LPCWSTR lpValue,

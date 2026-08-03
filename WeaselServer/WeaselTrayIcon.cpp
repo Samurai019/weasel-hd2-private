@@ -17,7 +17,19 @@ WeaselTrayIcon::WeaselTrayIcon(weasel::UI& ui)
       m_schema_ascii_icon(),
       m_disabled(false) {}
 
-void WeaselTrayIcon::CustomizeMenu(HMENU hMenu) {}
+void WeaselTrayIcon::CustomizeMenu(HMENU hMenu) {
+  // HD2 behavior switches. Toggled items persist in HKCU
+  // Software\Rime\WeaselHD2 and are read live by the in-process TSF DLL,
+  // so the change takes effect on the next keystroke in the game.
+  ::AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+  ::AppendMenuW(
+      hMenu,
+      MF_STRING | (Hd2UnicodeCommitEnabled() ? MF_CHECKED : MF_UNCHECKED),
+      ID_WEASELTRAY_HD2_UNICODE_COMMIT, L"HD2 Unicode 提交");
+  ::AppendMenuW(
+      hMenu, MF_STRING | (Hd2CandidateFixEnabled() ? MF_CHECKED : MF_UNCHECKED),
+      ID_WEASELTRAY_HD2_CANDIDATE_FIX, L"HD2 候选栏定位修正");
+}
 
 BOOL WeaselTrayIcon::Create(HWND hTargetWnd) {
   HMODULE hModule = GetModuleHandle(NULL);

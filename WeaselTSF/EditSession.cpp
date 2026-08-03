@@ -17,16 +17,26 @@ STDAPI WeaselTSF::DoEditSession(TfEditCookie ec) {
 
   if (ok) {
     if (!commit.empty()) {
-      // Helldivers 2 Unicode commit proof of concept. The normal TSF text
-      // insertion path is intentionally bypassed so the commit cannot be
-      // inserted twice.
-      const BOOL compositionEnded =
-          !_IsComposing() ||
-          _EndCompositionSynchronously(ec, _pEditSessionContext, true);
-      const BOOL unicodeSent = compositionEnded && _SendUnicodeText(commit);
-      if (!unicodeSent) {
-        OutputDebugStringW(
-            L"Weasel HD2 POC: Unicode commit was not fully inserted.\n");
+      if (Hd2UnicodeCommitEnabled()) {
+        // Helldivers 2 Unicode commit. The normal TSF text insertion path
+        // is intentionally bypassed so the commit cannot be inserted twice.
+        const BOOL compositionEnded =
+            !_IsComposing() ||
+            _EndCompositionSynchronously(ec, _pEditSessionContext, true);
+        const BOOL unicodeSent = compositionEnded && _SendUnicodeText(commit);
+        if (!unicodeSent) {
+          OutputDebugStringW(
+              L"Weasel HD2: Unicode commit was not fully inserted.\n");
+        }
+      } else {
+        // For auto-selecting, commit and preedit can both exist.
+        // Commit and close the original composition first.
+        if (!_IsComposing()) {
+          _StartComposition(_pEditSessionContext,
+                            _fCUASWorkaroundEnabled && !config.inline_preedit);
+        }
+        _InsertText(_pEditSessionContext, commit);
+        _EndComposition(_pEditSessionContext, false);
       }
       _committed = TRUE;
     } else {

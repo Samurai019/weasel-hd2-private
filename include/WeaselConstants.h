@@ -4,6 +4,12 @@
 #define WEASEL_REG_KEY L"Software\\Rime\\WeaselHD2"
 #define WEASEL_USER_REG_KEY L"Software\\Rime\\WeaselHD2"
 #define WEASEL_UPDATE_REG_KEY L"Software\\Rime\\WeaselHD2\\Updates"
+
+// HD2 behavior switches (DWORD, 1 = enabled). Both default to enabled;
+// the in-process TSF DLL reads them on every use so changes take effect
+// immediately, no redeploy required.
+#define WEASEL_HD2_REG_VALUE_UNICODE_COMMIT L"Hd2UnicodeCommit"
+#define WEASEL_HD2_REG_VALUE_CANDIDATE_FIX L"Hd2CandidateFix"
 #define WEASEL_TSF_BASENAME L"weaselhd2"
 #define WEASEL_SERVER_MUTEX L"(WEASEL-HD2)Furandoru-Sukaretto-"
 #define WEASEL_DEPLOYER_MUTEX L"WeaselHD2DeployerMutex"

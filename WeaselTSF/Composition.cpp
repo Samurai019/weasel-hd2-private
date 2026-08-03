@@ -239,6 +239,35 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
   const HRESULT textExtResult =
       _pContextView->GetTextExt(ec, pRange, &rc, &fClipped);
 
+  if (!Hd2CandidateFixEnabled()) {
+    // Original upstream behavior: use the reported text extent directly,
+    // with the optional enhanced position correction.
+    if (SUCCEEDED(textExtResult) && (rc.left != 0 || rc.top != 0)) {
+      if (_enhancedPosition) {
+        HWND hwnd = ::GetForegroundWindow();
+        RECT rcForegroundWindow = {};
+        ::GetWindowRect(hwnd, &rcForegroundWindow);
+
+        if (rc.left < rcForegroundWindow.left ||
+            rc.left > rcForegroundWindow.right ||
+            rc.top < rcForegroundWindow.top ||
+            rc.top > rcForegroundWindow.bottom) {
+          POINT pt = {};
+          bool hasCaret = ::GetCaretPos(&pt);
+          int offsetx =
+              rcForegroundWindow.left - rc.left + (hasCaret ? pt.x : 0);
+          int offsety = rcForegroundWindow.top - rc.top + (hasCaret ? pt.y : 0);
+          rc.left += offsetx;
+          rc.right += offsetx;
+          rc.top += offsety;
+          rc.bottom += offsety;
+        }
+      }
+      _pTextService->_SetCompositionPosition(rc);
+    }
+    return S_OK;
+  }
+
   RECT rcView = {};
   const bool hasScreenExt = SUCCEEDED(_pContextView->GetScreenExt(&rcView));
   const bool hasViewWidth = rcView.right > rcView.left;
