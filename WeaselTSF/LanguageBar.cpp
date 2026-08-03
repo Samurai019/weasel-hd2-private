@@ -15,7 +15,7 @@ static void HMENU2ITfMenu(HMENU hMenu, ITfMenu* pTfMenu) {
   for (int i = 0; i < N; i++) {
     MENUITEMINFO mii;
     mii.cbSize = sizeof(MENUITEMINFO);
-    mii.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+    mii.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING | MIIM_STATE;
     mii.dwTypeData = NULL;
     if (GetMenuItemInfo(hMenu, i, TRUE, &mii)) {
       UINT id = mii.wID;
@@ -26,8 +26,9 @@ static void HMENU2ITfMenu(HMENU hMenu, ITfMenu* pTfMenu) {
         mii.dwTypeData = (LPWSTR)malloc(sizeof(WCHAR) * (mii.cch + 1));
         mii.cch++;
         if (GetMenuItemInfo(hMenu, i, TRUE, &mii))
-          pTfMenu->AddMenuItem(id, 0, NULL, NULL, mii.dwTypeData, mii.cch,
-                               NULL);
+          pTfMenu->AddMenuItem(
+              id, (mii.fState & MFS_CHECKED) ? TF_LBMENUF_CHECKED : 0, NULL,
+              NULL, mii.dwTypeData, mii.cch, NULL);
         free(mii.dwTypeData);
       }
     }
@@ -172,6 +173,12 @@ STDAPI CLangBarItemButton::OnClick(TfLBIClick click,
         menu = LoadMenuW(g_hInst, MAKEINTRESOURCE(IDR_MENU_POPUP));
       }
       HMENU popupMenu = GetSubMenu(menu, 0);
+      CheckMenuItem(popupMenu, ID_WEASELTRAY_HD2_UNICODE_COMMIT,
+                    MF_BYCOMMAND | (Hd2UnicodeCommitEnabled() ? MF_CHECKED
+                                                              : MF_UNCHECKED));
+      CheckMenuItem(popupMenu, ID_WEASELTRAY_HD2_CANDIDATE_FIX,
+                    MF_BYCOMMAND |
+                        (Hd2CandidateFixEnabled() ? MF_CHECKED : MF_UNCHECKED));
       UINT wID = TrackPopupMenuEx(
           popupMenu, TPM_NONOTIFY | TPM_RETURNCMD | TPM_HORPOSANIMATION, pt.x,
           pt.y, hwnd, NULL);
@@ -185,6 +192,12 @@ STDAPI CLangBarItemButton::OnClick(TfLBIClick click,
 STDAPI CLangBarItemButton::InitMenu(ITfMenu* pMenu) {
   HMENU menu = LoadMenuW(g_hInst, MAKEINTRESOURCE(IDR_MENU_POPUP));
   HMENU popupMenu = GetSubMenu(menu, 0);
+  CheckMenuItem(
+      popupMenu, ID_WEASELTRAY_HD2_UNICODE_COMMIT,
+      MF_BYCOMMAND | (Hd2UnicodeCommitEnabled() ? MF_CHECKED : MF_UNCHECKED));
+  CheckMenuItem(
+      popupMenu, ID_WEASELTRAY_HD2_CANDIDATE_FIX,
+      MF_BYCOMMAND | (Hd2CandidateFixEnabled() ? MF_CHECKED : MF_UNCHECKED));
   HMENU2ITfMenu(popupMenu, pMenu);
   DestroyMenu(menu);
   return S_OK;
@@ -326,6 +339,12 @@ void WeaselTSF::_HandleLangBarMenuSelect(UINT wID) {
       break;
     case ID_WEASELTRAY_LOGDIR:
       open(WeaselLogPath().wstring());
+      break;
+    case ID_WEASELTRAY_HD2_UNICODE_COMMIT:
+      SetHd2UnicodeCommitEnabled(!Hd2UnicodeCommitEnabled());
+      break;
+    case ID_WEASELTRAY_HD2_CANDIDATE_FIX:
+      SetHd2CandidateFixEnabled(!Hd2CandidateFixEnabled());
       break;
     case ID_WEASELTRAY_WIKI:
       open(L"https://rime.im/docs/");
