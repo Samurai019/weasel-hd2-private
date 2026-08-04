@@ -14,6 +14,10 @@
 - **Unicode commit 提交**：輸入法確認文本以 `SendInput(KEYEVENTF_UNICODE)` 注入，兼容 HD2 聊天框
 - **獨立共存**：獨立的 TSF CLSID、Profile GUID、IPC 管道、註冊表鍵、安裝目錄、用戶數據目錄和日誌目錄
 - **候選窗定位修復**：在 HD2 自定義控件報告無效文本坐標時，自動回退到文檔視圖右下角區域
+- **HD2 行為開關**：語言欄「中」圖標右鍵菜單可切換兩項 HD2 行為（存儲於註冊表 `HKCU\Software\Rime\WeaselHD2`，即時生效，下次按鍵即生效）：
+  - 「HD2 Unicode 提交」：關閉時恢復原始 TSF `SetText` 提交路徑並禁用 `VK_PACKET` 直通
+  - 「HD2 候選定位修正」：關閉時恢復原始 `GetTextExt` 定位邏輯（無右下角兜底錨點）
+- **候選定位診斷日誌**：註冊表開啟 `Hd2CandidateFixLog`（DWORD 默認關）後，每次候選定位寫一行到 `%TEMP%\rime.weasel.hd2\candidate-position.log`，記錄定位分支、`GetTextExt` 結果與最終輸出位置，便於排查候選窗定位問題
 - **語言欄完整**：保留標準 TSF 輸入模式語言欄圖標和右鍵菜單
 
 安裝與使用
