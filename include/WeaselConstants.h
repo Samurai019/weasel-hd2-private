@@ -10,6 +10,10 @@
 // immediately, no redeploy required.
 #define WEASEL_HD2_REG_VALUE_UNICODE_COMMIT L"Hd2UnicodeCommit"
 #define WEASEL_HD2_REG_VALUE_CANDIDATE_FIX L"Hd2CandidateFix"
+// Diagnostics only, default disabled: logs caret/candidate positions on
+// every candidate window reposition to
+// %TEMP%\rime.weasel.hd2\candidate-position.log
+#define WEASEL_HD2_REG_VALUE_CANDIDATE_FIX_LOG L"Hd2CandidateFixLog"
 #define WEASEL_TSF_BASENAME L"weaselhd2"
 #define WEASEL_SERVER_MUTEX L"(WEASEL-HD2)Furandoru-Sukaretto-"
 #define WEASEL_DEPLOYER_MUTEX L"WeaselHD2DeployerMutex"

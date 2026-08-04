@@ -233,6 +233,10 @@ inline bool Hd2CandidateFixEnabled() {
   return Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_CANDIDATE_FIX, true);
 }
 
+inline bool Hd2CandidateFixLogEnabled() {
+  return Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_CANDIDATE_FIX_LOG, false);
+}
+
 inline void SetHd2UnicodeCommitEnabled(bool enabled) {
   Hd2SetSwitch(WEASEL_HD2_REG_VALUE_UNICODE_COMMIT, enabled);
 }

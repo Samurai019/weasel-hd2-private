@@ -189,6 +189,82 @@ BOOL WeaselTSF::_SendUnicodeText(const std::wstring& text) {
   return inserted == inputs.size();
 }
 
+/* Candidate Position Diagnostics */
+namespace {
+
+std::wstring Hd2LogRect(const RECT& rc) {
+  wchar_t buf[64] = {};
+  swprintf_s(buf, L"(%ld,%ld,%ld,%ld)", rc.left, rc.top, rc.right, rc.bottom);
+  return std::wstring(buf);
+}
+
+std::wstring Hd2LogWindowInfo(HWND hwnd) {
+  if (hwnd == NULL)
+    return L"null";
+  wchar_t cls[128] = {};
+  ::GetClassNameW(hwnd, cls, _countof(cls));
+  RECT rc = {};
+  ::GetWindowRect(hwnd, &rc);
+  wchar_t buf[256] = {};
+  swprintf_s(buf, L"0x%p cls=%ls rect=%ls", hwnd, cls, Hd2LogRect(rc).c_str());
+  return std::wstring(buf);
+}
+
+struct Hd2PositionLogData {
+  const wchar_t* branch;
+  HRESULT textExtResult;
+  RECT textExt;
+  BOOL fClipped;
+  RECT screenExt;
+  bool hasViewRect;
+  HWND viewWnd;
+  HWND foregroundWnd;
+  POINT caret;
+  bool hasCaret;
+  POINT mouse;
+  bool invalidRect;
+  bool nearViewOrigin;
+  RECT out;
+};
+
+void Hd2WritePositionLog(const Hd2PositionLogData& data) {
+  if (!Hd2CandidateFixLogEnabled())
+    return;
+
+  SYSTEMTIME st = {};
+  ::GetLocalTime(&st);
+  wchar_t ts[64] = {};
+  swprintf_s(ts, L"%04u-%02u-%02u %02u:%02u:%02u.%03u", st.wYear, st.wMonth,
+             st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
+  wchar_t line[1024] = {};
+  swprintf_s(line,
+             L"%ls pid=%u branch=%ls textExt=%ls hr=0x%08lx clip=%d "
+             L"screenExt=%ls hasView=%d view=%ls fg=%ls caret=(%ld,%ld) "
+             L"ok=%d mouse=(%ld,%ld) invalid=%d nearOrigin=%d out=%ls",
+             ts, ::GetCurrentProcessId(), data.branch,
+             Hd2LogRect(data.textExt).c_str(), data.textExtResult,
+             data.fClipped ? 1 : 0, Hd2LogRect(data.screenExt).c_str(),
+             data.hasViewRect ? 1 : 0, Hd2LogWindowInfo(data.viewWnd).c_str(),
+             Hd2LogWindowInfo(data.foregroundWnd).c_str(), data.caret.x,
+             data.caret.y, data.hasCaret ? 1 : 0, data.mouse.x, data.mouse.y,
+             data.invalidRect ? 1 : 0, data.nearViewOrigin ? 1 : 0,
+             Hd2LogRect(data.out).c_str());
+
+  fs::path path = WeaselLogPath() / L"candidate-position.log";
+  HANDLE h = ::CreateFileW(path.c_str(), FILE_APPEND_DATA,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                           OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (h == INVALID_HANDLE_VALUE)
+    return;
+  std::string utf8 = wstring_to_string(line, CP_UTF8) + "\r\n";
+  DWORD written = 0;
+  ::WriteFile(h, utf8.data(), static_cast<DWORD>(utf8.size()), &written, NULL);
+  ::CloseHandle(h);
+}
+
+}  // namespace
+
 /* Get Text Extent */
 class CGetTextExtentEditSession : public CEditSession {
  public:
@@ -239,6 +315,14 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
   const HRESULT textExtResult =
       _pContextView->GetTextExt(ec, pRange, &rc, &fClipped);
 
+  HWND hwndView = NULL;
+  _pContextView->GetWnd(&hwndView);
+  HWND hwndForeground = ::GetForegroundWindow();
+  POINT ptCaret = {};
+  const bool hasCaret = !!::GetCaretPos(&ptCaret);
+  POINT ptMouse = {};
+  ::GetCursorPos(&ptMouse);
+
   if (!Hd2CandidateFixEnabled()) {
     // Original upstream behavior: use the reported text extent directly,
     // with the optional enhanced position correction.
@@ -264,6 +348,14 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
         }
       }
       _pTextService->_SetCompositionPosition(rc);
+    }
+    if (Hd2CandidateFixLogEnabled()) {
+      RECT rcView = {};
+      const bool hasViewRect = SUCCEEDED(_pContextView->GetScreenExt(&rcView));
+      Hd2WritePositionLog(
+          {L"raw", textExtResult, rc, fClipped, rcView, hasViewRect, hwndView,
+           hwndForeground, ptCaret, hasCaret, ptMouse,
+           FAILED(textExtResult) || (rc.left == 0 && rc.top == 0), false, rc});
     }
     return S_OK;
   }
@@ -310,9 +402,20 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
     ::OffsetRect(&rc, offsetx, offsety);
   }
 
+  const wchar_t* branch = L"direct";
+  if ((invalidRect || nearViewOrigin) && hasViewRect)
+    branch = L"fallback";
+  else if (SUCCEEDED(textExtResult) && _enhancedPosition && hasViewRect &&
+           (rc.left < rcView.left || rc.left > rcView.right ||
+            rc.top < rcView.top || rc.top > rcView.bottom))
+    branch = L"enhanced";
+
   if (!invalidRect || hasViewRect) {
     _pTextService->_SetCompositionPosition(rc);
   }
+  Hd2WritePositionLog({branch, textExtResult, rc, fClipped, rcView, hasViewRect,
+                       hwndView, hwndForeground, ptCaret, hasCaret, ptMouse,
+                       invalidRect, nearViewOrigin, rc});
   return S_OK;
 }
 
