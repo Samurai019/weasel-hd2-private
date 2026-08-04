@@ -224,6 +224,7 @@ struct Hd2PositionLogData {
   POINT mouse;
   bool invalidRect;
   bool nearViewOrigin;
+  bool keepPrevious;
   RECT out;
 };
 
@@ -241,7 +242,7 @@ void Hd2WritePositionLog(const Hd2PositionLogData& data) {
   swprintf_s(line,
              L"%ls pid=%u branch=%ls textExt=%ls hr=0x%08lx clip=%d "
              L"screenExt=%ls hasView=%d view=%ls fg=%ls caret=(%ld,%ld) "
-             L"ok=%d mouse=(%ld,%ld) invalid=%d nearOrigin=%d out=%ls",
+             L"ok=%d mouse=(%ld,%ld) invalid=%d nearOrigin=%d skip=%d out=%ls",
              ts, ::GetCurrentProcessId(), data.branch,
              Hd2LogRect(data.textExt).c_str(), data.textExtResult,
              data.fClipped ? 1 : 0, Hd2LogRect(data.screenExt).c_str(),
@@ -249,7 +250,7 @@ void Hd2WritePositionLog(const Hd2PositionLogData& data) {
              Hd2LogWindowInfo(data.foregroundWnd).c_str(), data.caret.x,
              data.caret.y, data.hasCaret ? 1 : 0, data.mouse.x, data.mouse.y,
              data.invalidRect ? 1 : 0, data.nearViewOrigin ? 1 : 0,
-             Hd2LogRect(data.out).c_str());
+             data.keepPrevious ? 1 : 0, Hd2LogRect(data.out).c_str());
 
   fs::path path = WeaselLogPath() / L"candidate-position.log";
   HANDLE h = ::CreateFileW(path.c_str(), FILE_APPEND_DATA,
@@ -348,16 +349,24 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
           rc.bottom += offsety;
         }
       }
-      _pTextService->_SetCompositionPosition(rc);
+      // HD2: skip degenerate rects (zero-height caret at the window origin,
+      // e.g. wezterm's transient layout-not-ready default) instead of
+      // flashing the candidate UI at the window top-left corner.
+      const bool degenerateRect = rc.right < rc.left || rc.bottom <= rc.top;
+      if (!degenerateRect) {
+        _pTextService->_SetCompositionPosition(rc);
+      }
     }
     if (Hd2CandidateFixLogEnabled()) {
       RECT rcView = {};
       const bool hasViewRect = SUCCEEDED(_pContextView->GetScreenExt(&rcView));
+      const bool degenerateRect =
+          rcTextExt.right < rcTextExt.left || rcTextExt.bottom <= rcTextExt.top;
       Hd2WritePositionLog(
           {L"raw", textExtResult, rcTextExt, fClipped, rcView, hasViewRect,
            hwndView, hwndForeground, ptCaret, hasCaret, ptMouse,
            FAILED(textExtResult) || (rcTextExt.left == 0 && rcTextExt.top == 0),
-           false, rc});
+           false, degenerateRect, rc});
     }
     return S_OK;
   }
@@ -380,9 +389,19 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
 
   const bool invertedRect = rc.right < rc.left || rc.bottom <= rc.top;
   const bool invalidRect = FAILED(textExtResult) || invertedRect;
+  RECT rcWindow = {};
+  const bool hasWindowRect =
+      hwndView != NULL && ::GetWindowRect(hwndView, &rcWindow) != FALSE;
+  // Only trust the near-origin heuristic when the TSF view covers the whole
+  // window; for apps whose view is a small edit control (e.g. Chrome's
+  // input box) the caret legitimately sits at the view origin.
+  const bool viewMatchesWindow =
+      !hasWindowRect || (abs(rcView.left - rcWindow.left) <= 16 &&
+                         abs(rcView.top - rcWindow.top) <= 16);
   const bool nearViewLeft = abs(rc.left - rcView.left) <= 2;
   const bool nearViewTop = abs(rc.top - rcView.top) <= 2;
-  const bool nearViewOrigin = hasViewRect && nearViewLeft && nearViewTop;
+  const bool nearViewOrigin =
+      hasViewRect && viewMatchesWindow && nearViewLeft && nearViewTop;
 
   if ((invalidRect || nearViewOrigin) && hasViewRect) {
     // HD2 exposes a TSF text store but reports an empty or top-left text
@@ -412,12 +431,18 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
             rc.top < rcView.top || rc.top > rcView.bottom))
     branch = L"enhanced";
 
-  if (!invalidRect || hasViewRect) {
+  // HD2: skip degenerate rects that merely failed to update (wezterm returns
+  // a zero-height rect at the window origin while its layout settles) and
+  // keep the previous candidate position instead of flashing the candidate
+  // UI; genuine failures (the game's hr=0x80040206) still take the fallback.
+  const bool keepPrevious =
+      SUCCEEDED(textExtResult) && invertedRect && !nearViewOrigin;
+  if ((!invalidRect || hasViewRect) && !keepPrevious) {
     _pTextService->_SetCompositionPosition(rc);
   }
   Hd2WritePositionLog({branch, textExtResult, rcTextExt, fClipped, rcView,
                        hasViewRect, hwndView, hwndForeground, ptCaret, hasCaret,
-                       ptMouse, invalidRect, nearViewOrigin, rc});
+                       ptMouse, invalidRect, nearViewOrigin, keepPrevious, rc});
   return S_OK;
 }
 
