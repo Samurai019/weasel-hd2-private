@@ -314,6 +314,7 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
 
   const HRESULT textExtResult =
       _pContextView->GetTextExt(ec, pRange, &rc, &fClipped);
+  const RECT rcTextExt = rc;
 
   HWND hwndView = NULL;
   _pContextView->GetWnd(&hwndView);
@@ -353,9 +354,10 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
       RECT rcView = {};
       const bool hasViewRect = SUCCEEDED(_pContextView->GetScreenExt(&rcView));
       Hd2WritePositionLog(
-          {L"raw", textExtResult, rc, fClipped, rcView, hasViewRect, hwndView,
-           hwndForeground, ptCaret, hasCaret, ptMouse,
-           FAILED(textExtResult) || (rc.left == 0 && rc.top == 0), false, rc});
+          {L"raw", textExtResult, rcTextExt, fClipped, rcView, hasViewRect,
+           hwndView, hwndForeground, ptCaret, hasCaret, ptMouse,
+           FAILED(textExtResult) || (rcTextExt.left == 0 && rcTextExt.top == 0),
+           false, rc});
     }
     return S_OK;
   }
@@ -413,9 +415,9 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
   if (!invalidRect || hasViewRect) {
     _pTextService->_SetCompositionPosition(rc);
   }
-  Hd2WritePositionLog({branch, textExtResult, rc, fClipped, rcView, hasViewRect,
-                       hwndView, hwndForeground, ptCaret, hasCaret, ptMouse,
-                       invalidRect, nearViewOrigin, rc});
+  Hd2WritePositionLog({branch, textExtResult, rcTextExt, fClipped, rcView,
+                       hasViewRect, hwndView, hwndForeground, ptCaret, hasCaret,
+                       ptMouse, invalidRect, nearViewOrigin, rc});
   return S_OK;
 }
 
