@@ -17,7 +17,7 @@ STDAPI WeaselTSF::DoEditSession(TfEditCookie ec) {
 
   if (ok) {
     if (!commit.empty()) {
-      if (Hd2UnicodeCommitEnabled()) {
+      if (Hd2UnicodeCommitActive()) {
         // Helldivers 2 Unicode commit. The normal TSF text insertion path
         // is intentionally bypassed so the commit cannot be inserted twice.
         const BOOL compositionEnded =

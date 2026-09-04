@@ -87,7 +87,7 @@ STDAPI WeaselTSF::OnTestKeyDown(ITfContext* pContext,
                                 WPARAM wParam,
                                 LPARAM lParam,
                                 BOOL* pfEaten) {
-  if (Hd2UnicodeCommitEnabled() && wParam == VK_PACKET) {
+  if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;
   }
@@ -107,7 +107,7 @@ STDAPI WeaselTSF::OnKeyDown(ITfContext* pContext,
                             WPARAM wParam,
                             LPARAM lParam,
                             BOOL* pfEaten) {
-  if (Hd2UnicodeCommitEnabled() && wParam == VK_PACKET) {
+  if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;
   }
@@ -126,7 +126,7 @@ STDAPI WeaselTSF::OnTestKeyUp(ITfContext* pContext,
                               WPARAM wParam,
                               LPARAM lParam,
                               BOOL* pfEaten) {
-  if (Hd2UnicodeCommitEnabled() && wParam == VK_PACKET) {
+  if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;
   }
@@ -146,7 +146,7 @@ STDAPI WeaselTSF::OnKeyUp(ITfContext* pContext,
                           WPARAM wParam,
                           LPARAM lParam,
                           BOOL* pfEaten) {
-  if (Hd2UnicodeCommitEnabled() && wParam == VK_PACKET) {
+  if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;
   }

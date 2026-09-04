@@ -237,12 +237,85 @@ inline bool Hd2CandidateFixLogEnabled() {
   return Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_CANDIDATE_FIX_LOG, false);
 }
 
+inline bool Hd2AutoDetectEnabled() {
+  return Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_AUTO_DETECT, true);
+}
+
 inline void SetHd2UnicodeCommitEnabled(bool enabled) {
   Hd2SetSwitch(WEASEL_HD2_REG_VALUE_UNICODE_COMMIT, enabled);
 }
 
 inline void SetHd2CandidateFixEnabled(bool enabled) {
   Hd2SetSwitch(WEASEL_HD2_REG_VALUE_CANDIDATE_FIX, enabled);
+}
+
+inline const std::wstring& Hd2GetCurrentProcessName() {
+  static const std::wstring s_proc_name = []() {
+    WCHAR path[MAX_PATH] = {};
+    if (::GetModuleFileNameW(NULL, path, MAX_PATH) == 0)
+      return std::wstring();
+    const WCHAR* slash = wcsrchr(path, L'\\');
+    if (!slash)
+      slash = wcsrchr(path, L'/');
+    std::wstring name = slash ? slash + 1 : path;
+    for (auto& ch : name)
+      ch = static_cast<wchar_t>(towlower(ch));
+    return name;
+  }();
+  return s_proc_name;
+}
+
+inline bool Hd2IsGameProcess() {
+  const std::wstring& current = Hd2GetCurrentProcessName();
+  if (current.empty())
+    return false;
+
+  WCHAR buf[512] = {};
+  DWORD type = 0;
+  DWORD size = sizeof(buf);
+  LSTATUS st = RegGetValueW(HKEY_CURRENT_USER, WEASEL_REG_KEY,
+                            WEASEL_HD2_REG_VALUE_TARGET_PROCESSES,
+                            RRF_RT_REG_SZ, &type, buf, &size);
+  std::wstring targets = (st == ERROR_SUCCESS && buf[0] != L'\0')
+                             ? std::wstring(buf)
+                             : std::wstring(L"helldivers2.exe");
+  for (auto& ch : targets)
+    ch = static_cast<wchar_t>(towlower(ch));
+
+  if (targets == L"*")
+    return true;
+
+  size_t start = 0;
+  while (start < targets.size()) {
+    size_t end = targets.find(L';', start);
+    if (end == std::wstring::npos)
+      end = targets.size();
+    std::wstring token = targets.substr(start, end - start);
+    while (!token.empty() && iswspace(token.front()))
+      token.erase(token.begin());
+    while (!token.empty() && iswspace(token.back()))
+      token.pop_back();
+    if (!token.empty() && token == current)
+      return true;
+    start = end + 1;
+  }
+  return false;
+}
+
+inline bool Hd2UnicodeCommitActive() {
+  if (!Hd2UnicodeCommitEnabled())
+    return false;
+  if (!Hd2AutoDetectEnabled())
+    return true;
+  return Hd2IsGameProcess();
+}
+
+inline bool Hd2CandidateFixActive() {
+  if (!Hd2CandidateFixEnabled())
+    return false;
+  if (!Hd2AutoDetectEnabled())
+    return true;
+  return Hd2IsGameProcess();
 }
 
 inline LONG RegGetStringValue(HKEY key,

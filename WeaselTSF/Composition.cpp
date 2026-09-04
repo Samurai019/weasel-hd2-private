@@ -240,10 +240,12 @@ void Hd2WritePositionLog(const Hd2PositionLogData& data) {
 
   wchar_t line[1024] = {};
   swprintf_s(line,
-             L"%ls pid=%u branch=%ls textExt=%ls hr=0x%08lx clip=%d "
+             L"%ls pid=%u proc=%ls isGame=%d branch=%ls textExt=%ls hr=0x%08lx "
+             L"clip=%d "
              L"screenExt=%ls hasView=%d view=%ls fg=%ls caret=(%ld,%ld) "
              L"ok=%d mouse=(%ld,%ld) invalid=%d nearOrigin=%d skip=%d out=%ls",
-             ts, ::GetCurrentProcessId(), data.branch,
+             ts, ::GetCurrentProcessId(), Hd2GetCurrentProcessName().c_str(),
+             Hd2IsGameProcess() ? 1 : 0, data.branch,
              Hd2LogRect(data.textExt).c_str(), data.textExtResult,
              data.fClipped ? 1 : 0, Hd2LogRect(data.screenExt).c_str(),
              data.hasViewRect ? 1 : 0, Hd2LogWindowInfo(data.viewWnd).c_str(),
@@ -325,7 +327,7 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
   POINT ptMouse = {};
   ::GetCursorPos(&ptMouse);
 
-  if (!Hd2CandidateFixEnabled()) {
+  if (!Hd2CandidateFixActive()) {
     // Original upstream behavior: use the reported text extent directly,
     // with the optional enhanced position correction.
     if (SUCCEEDED(textExtResult) && (rc.left != 0 || rc.top != 0)) {

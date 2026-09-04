@@ -10,6 +10,11 @@
 // immediately, no redeploy required.
 #define WEASEL_HD2_REG_VALUE_UNICODE_COMMIT L"Hd2UnicodeCommit"
 #define WEASEL_HD2_REG_VALUE_CANDIDATE_FIX L"Hd2CandidateFix"
+// Target game process detection: when enabled (default 1), HD2 behavior
+// switches are scoped to target processes (default "helldivers2.exe").
+// Non-game processes automatically run clean upstream behavior.
+#define WEASEL_HD2_REG_VALUE_AUTO_DETECT L"Hd2AutoDetect"
+#define WEASEL_HD2_REG_VALUE_TARGET_PROCESSES L"Hd2TargetProcesses"
 // Diagnostics only, default disabled: logs caret/candidate positions on
 // every candidate window reposition to
 // %TEMP%\rime.weasel.hd2\candidate-position.log
