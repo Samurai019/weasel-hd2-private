@@ -206,12 +206,13 @@ DWORD ServerImpl::OnInputStateLog(WEASEL_IPC_COMMAND uMsg,
   std::wstring line;
   // _Receive has already consumed the message header; its buffer starts at
   // the first UTF-16 character of the remaining body.
-  if (!channel->HandleResponseData([&](LPWSTR body, DWORD length) {
-        if (wParam > length)
-          return false;
-        line.assign(body, wParam);
-        return true;
-      }))
+  ResponseHandler readBody = [&](LPWSTR body, DWORD length) {
+    if (wParam > length)
+      return false;
+    line.assign(body, wParam);
+    return true;
+  };
+  if (!channel->HandleResponseData(readBody))
     return 0;
   for (auto& ch : line) {
     if (ch == L'\r' || ch == L'\n' || ch == L'\0')
