@@ -104,6 +104,7 @@ class WeaselTSF : public ITfTextInputProcessorEx,
 
   /* Compartments */
   BOOL _IsKeyboardDisabled();
+  void _Hd2LogInputState(const wchar_t* event, ITfContext* context = nullptr);
   BOOL _IsKeyboardOpen();
   HRESULT _SetKeyboardOpen(BOOL fOpen);
   HRESULT _GetCompartmentDWORD(DWORD& value, const GUID guid);
@@ -174,6 +175,7 @@ class WeaselTSF : public ITfTextInputProcessorEx,
   BOOL _InitKeyEventSink();
   void _UninitKeyEventSink();
   void _ProcessKeyEvent(WPARAM wParam, LPARAM lParam, BOOL* pfEaten);
+  std::wstring _hd2LastInputState;
 
   BOOL _InitPreservedKey();
   void _UninitPreservedKey();

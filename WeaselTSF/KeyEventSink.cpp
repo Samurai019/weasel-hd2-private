@@ -63,6 +63,7 @@ void WeaselTSF::_ProcessKeyEvent(WPARAM wParam, LPARAM lParam, BOOL* pfEaten) {
 }
 
 STDAPI WeaselTSF::OnSetFocus(BOOL fForeground) {
+  _Hd2LogInputState(fForeground ? L"foreground-in" : L"foreground-out");
   if (fForeground)
     m_client.FocusIn();
   else {
@@ -87,6 +88,7 @@ STDAPI WeaselTSF::OnTestKeyDown(ITfContext* pContext,
                                 WPARAM wParam,
                                 LPARAM lParam,
                                 BOOL* pfEaten) {
+  _Hd2LogInputState(L"key", pContext);
   if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;
@@ -107,6 +109,7 @@ STDAPI WeaselTSF::OnKeyDown(ITfContext* pContext,
                             WPARAM wParam,
                             LPARAM lParam,
                             BOOL* pfEaten) {
+  _Hd2LogInputState(L"key", pContext);
   if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;
@@ -126,6 +129,7 @@ STDAPI WeaselTSF::OnTestKeyUp(ITfContext* pContext,
                               WPARAM wParam,
                               LPARAM lParam,
                               BOOL* pfEaten) {
+  _Hd2LogInputState(L"key", pContext);
   if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;
@@ -146,6 +150,7 @@ STDAPI WeaselTSF::OnKeyUp(ITfContext* pContext,
                           WPARAM wParam,
                           LPARAM lParam,
                           BOOL* pfEaten) {
+  _Hd2LogInputState(L"key", pContext);
   if (Hd2UnicodeCommitActive() && wParam == VK_PACKET) {
     *pfEaten = FALSE;
     return S_OK;

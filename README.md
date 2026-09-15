@@ -36,6 +36,32 @@
 
 > ⚠️ 本版本不使用官方小狼毫的自動更新通道，如需升級請手動下載新版本覆蓋安裝。
 
+遊戲按鍵被輸入法攔截的診斷
+--------------------------
+
+若聊天框關閉後，WASD 等遊戲按鍵仍被輸入法接管，可開啟輸入狀態診斷：
+
+```powershell
+reg add "HKCU\Software\Rime\WeaselHD2" /v Hd2InputStateLog /t REG_DWORD /d 1 /f
+Get-Content "$env:TEMP\rime.weasel.hd2\input-state.log" -Tail 40
+```
+
+此開關預設關閉，沒有菜單項，只在 `Hd2TargetProcesses` 指定的進程內記錄。
+日誌記錄焦點、輸入上下文、禁用／空上下文標記、開關及組字狀態；不記錄按鍵碼或輸入文字，連續相同狀態會合併。
+`disabled`、`empty`、`open` 的 `-1` 表示狀態不可讀取，不等同於 `0`。
+
+測試時依次執行：聊天框關閉時按移動鍵、打開聊天並輸入中文、發送後按移動鍵、再次打開聊天並用 Esc 關閉、切出及切回遊戲。
+記下各步驟的時間，便於比對日誌。現有候選定位日誌不能替代此診斷。
+升級診斷 DLL 後須重啟遊戲；已運行的遊戲仍使用記憶體中的舊 DLL。
+
+測試結束後關閉：
+
+```powershell
+reg add "HKCU\Software\Rime\WeaselHD2" /v Hd2InputStateLog /t REG_DWORD /d 0 /f
+```
+
+此版本修正了「空上下文＝0」覆蓋「禁止輸入＝1」的判斷；若遊戲關閉聊天框時沒有更新輸入狀態，仍需根據診斷結果進一步處理。
+
 與官方小狼毫的隔離
 ------------------
 

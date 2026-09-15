@@ -19,6 +19,7 @@
 // every candidate window reposition to
 // %TEMP%\rime.weasel.hd2\candidate-position.log
 #define WEASEL_HD2_REG_VALUE_CANDIDATE_FIX_LOG L"Hd2CandidateFixLog"
+#define WEASEL_HD2_REG_VALUE_INPUT_STATE_LOG L"Hd2InputStateLog"
 #define WEASEL_TSF_BASENAME L"weaselhd2"
 #define WEASEL_SERVER_MUTEX L"(WEASEL-HD2)Furandoru-Sukaretto-"
 #define WEASEL_DEPLOYER_MUTEX L"WeaselHD2DeployerMutex"

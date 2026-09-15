@@ -11,6 +11,7 @@ STDAPI WeaselTSF::OnUninitDocumentMgr(ITfDocumentMgr* pDocMgr) {
 
 STDAPI WeaselTSF::OnSetFocus(ITfDocumentMgr* pDocMgrFocus,
                              ITfDocumentMgr* pDocMgrPrevFocus) {
+  _Hd2LogInputState(L"document-focus");
   _InitTextEditSink(pDocMgrFocus);
 
   com_ptr<ITfDocumentMgr> pCandidateListDocumentMgr;
@@ -28,10 +29,12 @@ STDAPI WeaselTSF::OnSetFocus(ITfDocumentMgr* pDocMgrFocus,
 }
 
 STDAPI WeaselTSF::OnPushContext(ITfContext* pContext) {
+  _Hd2LogInputState(L"push-context", pContext);
   return S_OK;
 }
 
 STDAPI WeaselTSF::OnPopContext(ITfContext* pContext) {
+  _Hd2LogInputState(L"pop-context", pContext);
   return S_OK;
 }
 
