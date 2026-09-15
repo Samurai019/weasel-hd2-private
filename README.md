@@ -46,13 +46,13 @@ reg add "HKCU\Software\Rime\WeaselHD2" /v Hd2InputStateLog /t REG_DWORD /d 1 /f
 Get-Content "$env:TEMP\rime.weasel.hd2\input-state.log" -Tail 40
 ```
 
-此開關預設關閉，沒有菜單項，只在 `Hd2TargetProcesses` 指定的進程內記錄。
+此開關預設關閉，沒有菜單項。`Hd2TargetProcesses` 指定的進程採集狀態，經獨立 IPC 連線交給輸入法服務端讀取開關並寫入日誌，避免游戏进程内日志未生成的问题。
 日誌記錄焦點、輸入上下文、禁用／空上下文標記、開關及組字狀態；不記錄按鍵碼或輸入文字，連續相同狀態會合併。
 `disabled`、`empty`、`open` 的 `-1` 表示狀態不可讀取，不等同於 `0`。
 
 測試時依次執行：聊天框關閉時按移動鍵、打開聊天並輸入中文、發送後按移動鍵、再次打開聊天並用 Esc 關閉、切出及切回遊戲。
 記下各步驟的時間，便於比對日誌。現有候選定位日誌不能替代此診斷。
-升級診斷 DLL 後須重啟遊戲；已運行的遊戲仍使用記憶體中的舊 DLL。
+診斷功能需要配套的新版 WeaselServer。升級後須重啟服務及遊戲；已運行的遊戲仍使用記憶體中的舊 DLL。
 
 測試結束後關閉：
 

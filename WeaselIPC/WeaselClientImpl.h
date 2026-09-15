@@ -18,6 +18,7 @@ class ClientImpl {
   void EndMaintenance();
   bool Echo();
   bool ProcessKeyEvent(KeyEvent const& keyEvent);
+  bool InputStateLog(const std::wstring& line);
   bool CommitComposition();
   bool ClearComposition();
   bool SelectCandidateOnCurrentPage(size_t index);
@@ -44,6 +45,9 @@ class ClientImpl {
   bool is_ime;
 
   PipeChannel<PipeMessage> channel;
+  PipeChannel<PipeMessage> diagnostic_channel;
+  ULONGLONG diagnostic_check = 0;
+  bool diagnostic_enabled = false;
 };
 
 }  // namespace weasel

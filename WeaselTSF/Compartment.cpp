@@ -89,8 +89,7 @@ HRESULT CCompartmentEventSink::_Unadvise() {
 
 // State-only diagnostics: never record key codes, preedit, or committed text.
 void WeaselTSF::_Hd2LogInputState(const wchar_t* event, ITfContext* context) {
-  if (!Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_INPUT_STATE_LOG, false) ||
-      !Hd2IsGameProcess()) {
+  if (!Hd2IsGameProcess() || !m_client.InputStateLog(L"")) {
     _hd2LastInputState.clear();
     return;
   }
@@ -145,19 +144,8 @@ void WeaselTSF::_Hd2LogInputState(const wchar_t* event, ITfContext* context) {
              now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute,
              now.wSecond, now.wMilliseconds, GetCurrentProcessId(),
              GetCurrentThreadId(), state);
-  const auto path = WeaselLogPath() / L"input-state.log";
-  HANDLE file = CreateFileW(path.c_str(), FILE_APPEND_DATA,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                            OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (file == INVALID_HANDLE_VALUE)
-    return;
-  const std::string utf8 = wstring_to_string(line, CP_UTF8) + "\r\n";
-  DWORD written = 0;
-  if (WriteFile(file, utf8.data(), static_cast<DWORD>(utf8.size()), &written,
-                nullptr) &&
-      written == utf8.size())
+  if (m_client.InputStateLog(line))
     _hd2LastInputState = state;
-  CloseHandle(file);
 }
 
 BOOL WeaselTSF::_IsKeyboardDisabled() {

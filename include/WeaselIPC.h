@@ -32,6 +32,7 @@ enum WEASEL_IPC_COMMAND {
   WEASEL_IPC_SELECT_CANDIDATE_ON_CURRENT_PAGE,
   WEASEL_IPC_HIGHLIGHT_CANDIDATE_ON_CURRENT_PAGE,
   WEASEL_IPC_CHANGE_PAGE,
+  WEASEL_IPC_INPUT_STATE_LOG,
   WEASEL_IPC_LAST_COMMAND
 };
 
@@ -122,6 +123,8 @@ class Client {
   bool Echo();
   // 请求服务处理按键消息
   bool ProcessKeyEvent(KeyEvent const& keyEvent);
+  // Empty line queries the server-side diagnostic switch.
+  bool InputStateLog(const std::wstring& line);
   // 上屏正在編輯的文字
   bool CommitComposition();
   // 清除正在編輯的文字

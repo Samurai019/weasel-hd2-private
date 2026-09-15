@@ -5,7 +5,10 @@
 using namespace weasel;
 
 ClientImpl::ClientImpl()
-    : session_id(0), channel(GetPipeName()), is_ime(false) {
+    : session_id(0),
+      channel(GetPipeName()),
+      diagnostic_channel(GetPipeName()),
+      is_ime(false) {
   _InitializeClientInfo();
 }
 
@@ -49,6 +52,9 @@ void ClientImpl::Disconnect() {
   if (_Active())
     EndSession();
   channel.Disconnect();
+  diagnostic_channel.Disconnect();
+  diagnostic_check = 0;
+  diagnostic_enabled = false;
 }
 
 void ClientImpl::ShutdownServer() {
@@ -62,6 +68,31 @@ bool ClientImpl::ProcessKeyEvent(KeyEvent const& keyEvent) {
   LRESULT ret =
       _SendMessage(WEASEL_IPC_PROCESS_KEY_EVENT, keyEvent, session_id);
   return ret != 0;
+}
+
+bool ClientImpl::InputStateLog(const std::wstring& line) {
+  // Use a separate connection so diagnostics cannot overwrite pending Rime
+  // responses on the normal input channel. Older servers return zero.
+  if (!_Active() || line.size() >= 2048)
+    return false;
+  try {
+    const ULONGLONG now = GetTickCount64();
+    if (!diagnostic_check || now - diagnostic_check >= 1000) {
+      PipeMessage query{WEASEL_IPC_INPUT_STATE_LOG, 0, session_id};
+      diagnostic_enabled = diagnostic_channel.Transact(query) != 0;
+      diagnostic_check = now;
+    }
+    if (!diagnostic_enabled || line.empty())
+      return diagnostic_enabled;
+    diagnostic_channel << line.c_str();
+    PipeMessage request{WEASEL_IPC_INPUT_STATE_LOG,
+                        static_cast<DWORD>(line.size()), session_id};
+    return diagnostic_channel.Transact(request) != 0;
+  } catch (...) {
+    diagnostic_enabled = false;
+    diagnostic_check = GetTickCount64();
+    return false;
+  }
 }
 
 bool ClientImpl::CommitComposition() {
@@ -202,6 +233,10 @@ LRESULT ClientImpl::_SendMessage(WEASEL_IPC_COMMAND Msg,
 }
 
 Client::Client() : m_pImpl(new ClientImpl()) {}
+
+bool Client::InputStateLog(const std::wstring& line) {
+  return m_pImpl->InputStateLog(line);
+}
 
 Client::~Client() {
   if (m_pImpl)

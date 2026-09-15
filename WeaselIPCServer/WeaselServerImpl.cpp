@@ -192,6 +192,49 @@ DWORD ServerImpl::OnEcho(WEASEL_IPC_COMMAND uMsg, DWORD wParam, DWORD lParam) {
   return m_pRequestHandler->FindSession(lParam);
 }
 
+DWORD ServerImpl::OnInputStateLog(WEASEL_IPC_COMMAND uMsg,
+                                  DWORD wParam,
+                                  DWORD lParam) {
+  if (!m_pRequestHandler || !m_pRequestHandler->FindSession(lParam) ||
+      !Hd2SwitchEnabled(WEASEL_HD2_REG_VALUE_INPUT_STATE_LOG, false))
+    return 0;
+  if (wParam == 0)
+    return 1;
+  if (wParam >= 2048)
+    return 0;
+  // Only a bounded state snapshot is accepted; never interpret it as a format.
+  std::wstring line;
+  // _Receive has already consumed the message header; its buffer starts at
+  // the first UTF-16 character of the remaining body.
+  if (!channel->HandleResponseData([&](LPWSTR body, DWORD length) {
+        if (wParam > length)
+          return false;
+        line.assign(body, wParam);
+        return true;
+      }))
+    return 0;
+  for (auto& ch : line) {
+    if (ch == L'\r' || ch == L'\n' || ch == L'\0')
+      ch = L' ';
+  }
+  try {
+    const auto path = WeaselLogPath() / L"input-state.log";
+    const std::string utf8 = wstring_to_string(line, CP_UTF8) + "\r\n";
+    HANDLE file = CreateFileW(path.c_str(), FILE_APPEND_DATA,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                              OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE)
+      return 0;
+    DWORD written = 0;
+    const BOOL ok = WriteFile(
+        file, utf8.data(), static_cast<DWORD>(utf8.size()), &written, nullptr);
+    CloseHandle(file);
+    return ok && written == utf8.size();
+  } catch (...) {
+    return 0;
+  }
+}
+
 DWORD ServerImpl::OnStartSession(WEASEL_IPC_COMMAND uMsg,
                                  DWORD wParam,
                                  DWORD lParam) {
@@ -381,6 +424,7 @@ void ServerImpl::HandlePipeMessage(PipeMessage pipe_msg, _Resp resp) {
 
   MAP_PIPE_MSG_HANDLE(pipe_msg.Msg, pipe_msg.wParam, pipe_msg.lParam)
   PIPE_MSG_HANDLE(WEASEL_IPC_ECHO, OnEcho)
+  PIPE_MSG_HANDLE(WEASEL_IPC_INPUT_STATE_LOG, OnInputStateLog)
   PIPE_MSG_HANDLE(WEASEL_IPC_START_SESSION, OnStartSession)
   PIPE_MSG_HANDLE(WEASEL_IPC_END_SESSION, OnEndSession)
   PIPE_MSG_HANDLE(WEASEL_IPC_PROCESS_KEY_EVENT, OnKeyEvent)
